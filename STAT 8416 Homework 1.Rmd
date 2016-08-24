@@ -1,0 +1,57 @@
+---
+title: "STAT 8416 Homework 1"
+author: "Brian Detweiler"
+date: "Wednesday, September 24, 2016"
+output: pdf_document
+---
+
+
+```{r}
+
+getSquare <- function(x) {
+  if (x > 100) {
+    return("Big number") 
+  } else {
+    return(x^2)
+  }
+}
+
+getSquare(5)
+getSquare(500)
+
+```
+
+
+```{r}
+
+getSquare <- function(x) {
+  
+  z <- lapply(x, function(y) {
+    if (y > 100) {
+      return("Big number")
+    } else {
+      return(y^2)
+    }
+  })
+  return(z)
+  # TODO: Get this unlisted and keep numerics numeric
+  
+}
+
+getSquare(5)
+getSquare(500)
+
+x <- c(25, 200)
+getSquare(x)
+
+```
+
+```{r}
+myVector <- rexp(90000, r=30)
+hist(myVector)
+
+myMatrix <- matrix(myVector, ncol=900)
+dim(myMatrix)
+hist(colMeans(myMatrix))
+
+```
