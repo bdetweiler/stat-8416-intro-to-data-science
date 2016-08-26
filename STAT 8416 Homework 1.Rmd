@@ -2,9 +2,20 @@
 title: "STAT 8416 Homework 1"
 author: "Brian Detweiler"
 date: "Wednesday, September 24, 2016"
-output: pdf_document
+output: html_document
 ---
 
+1. (a) What is data science?
+Data science is the act of gathering, cleaning, analyzing, and delivering a data product. It requires in-depth domain knowledge, hacking skills (curiosity and problem solving), and strong mathematical and statistical knowledge.
+
+   (b) Explain with an example what you mean by data product.
+A data product is the end result of a data transformation that contains some value to your customer. Data products can come in many forms, including reports, presentations, production-grade software decision support systems, or even academic publications.
+
+   (c) Carefully read the Cleveland's paper shown in lecture 2 and discuss what he suggested about the field of statistics and data science.
+   *TODO*
+   
+   (d) Explain in a short paragraph how data science is different from computer science.
+Computer Science is the study of computing; the infrastructure and mechanisms that process data. Data Science is the study of the data itself and deriving meaning from it. Incidentally, it happens to be very convenient to use computers for the analysis. It should be noted that Computer Science can and has existed without Data Science, but it would be very difficult (in all practicality, impossible) for Data Science to exist without Computer Science. 
 
 ```{r}
 
@@ -54,4 +65,16 @@ myMatrix <- matrix(myVector, ncol=900)
 dim(myMatrix)
 hist(colMeans(myMatrix))
 
+```
+
+Explain why the two histograms you have created in questions (\ref{exp-hist}) and (\ref{mean-hist}) are different in shapes.
+
+The two histograms are different shapes because the first follows the exponential distribution, as we would expect. The second is due to the Central Limit Theorem, which states that the sampling distribution of the sample mean approximates a normal distribution, regardless of underlying distribution. 
+
+
+What are the very first few steps one should do once data is loaded onto \textbf{R}? Demonstrate that by loading tips data from http://www.ggobi.org/book/data/tips.csv
+
+```{r}
+tips <- read.csv('http://www.ggobi.org/book/data/tips.csv')
+plot(tips$totbill, tips$tip)
 ```
