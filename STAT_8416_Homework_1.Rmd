@@ -2,7 +2,7 @@
 title: "STAT 8416 Homework 1"
 author: "Brian Detweiler"
 date: "Wednesday, September 24, 2016"
-output: html_document
+output: pdf_document
 ---
 
 1. (a) What is data science?
@@ -67,7 +67,8 @@ hist(colMeans(myMatrix))
 
 ```
 
-Explain why the two histograms you have created in questions (\ref{exp-hist}) and (\ref{mean-hist}) are different in shapes.
+Explain why the two histograms you have created in questions XXX and XXXY are different in shapes.
+
 
 The two histograms are different shapes because the first follows the exponential distribution, as we would expect. The second is due to the Central Limit Theorem, which states that the sampling distribution of the sample mean approximates a normal distribution, regardless of underlying distribution. 
 
@@ -75,6 +76,12 @@ The two histograms are different shapes because the first follows the exponentia
 What are the very first few steps one should do once data is loaded onto \textbf{R}? Demonstrate that by loading tips data from http://www.ggobi.org/book/data/tips.csv
 
 ```{r}
+
+# Note: On my work PC, I have to use a proxy.
+if(Sys.info()[1] == "Windows") {
+  setInternet2(TRUE)
+}
+
 tips <- read.csv('http://www.ggobi.org/book/data/tips.csv')
 plot(tips$totbill, tips$tip)
 ```
