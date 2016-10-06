@@ -1,0 +1,8 @@
+cache
+/*.log
+/*.gz
+/*.tex/*.RData/*.Rhistory
+/*.tex
+figure
+/.RData
+/.Rhistory

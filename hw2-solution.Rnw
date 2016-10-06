@@ -1,0 +1,492 @@
+\documentclass{article}
+\usepackage[vmargin=1in,hmargin=1in]{geometry}
+\usepackage{booktabs}
+\begin{document}
+
+<<include=FALSE>>=
+opts_chunk$set(fig.align='center', message=FALSE, cache=TRUE)
+@
+
+\begin{center}
+\large \textsc{Homework 2} \\
+Brian Detweiler\\
+STAT 4410/8416 Section 001/002\\
+\textsc{Fall 2016}\\
+Due: September 30, 2016 by midnight
+\normalsize
+\end{center}
+
+
+\begin{enumerate}
+\item  We generate a $n$x$k$ matrix $M$ and a vector $V$ of length $k$ for some specific values of $n$ and $k$ as follows;
+<<>>=
+set.seed(4286)
+n <- 4
+k <- 5
+V <- sample(seq(4), size = k, replace = TRUE)
+M <- matrix(rnorm(n * k), ncol = k)
+@
+
+\begin{enumerate}
+\item Now, carefully review the following for loop. Rewrite the code that does the same job but doesn't use a for loop.
+
+<<>>=
+X <- M
+for(i in seq(n)){
+  X[i,] <- round(M[i, ] / V, 2)
+}
+@
+
+\textbf{Answer: } We can use \texttt{apply} to apply a function to a particular dimension of a matrix, in this case, the rows. We must also transpose the matrix that \texttt{apply} returns.
+<<>>=
+Y <- t(apply(M, 1, function(x) { round(x / V, 2) }))
+@
+
+
+\item Now do the same experiment for $n=400$ and $k=500$. Which code runs faster, your code or the for loop? Demonstrate that using function \texttt{system.time()}.\\
+
+\textbf{Answer: }
+
+<<>>=
+n <- 400
+k <- 500
+V <- sample(seq(4), size = k, replace = TRUE)
+M <- matrix(rnorm(n * k), ncol = k)
+
+X <- M
+x.time <- system.time(
+  for(i in seq(n)){
+    X[i,] <- round(M[i, ] / V, 2)
+})
+
+y.time <- system.time(t(apply(M, 1, function(x) { round(x / V, 2) })))
+
+@
+
+The for-loop finished in \Sexpr{x.time[[3]]} @ milliseconds. The \texttt{apply} function finished in \Sexpr{y.time[[3]]} milliseconds.
+
+\end{enumerate}
+
+\pagebreak
+
+\item The data set \texttt{tips} contains tip for different party size as well as total bill personal information about bill payer. We can get the data from reshape2 packages as follows;
+
+<<>>=
+library(reshape2)
+tips.dat <- tips
+@
+
+
+Now answer the following questions.
+
+\begin{enumerate}
+  \item Compute tip rate dividing tip by total bill and create a new column called \texttt{tip.rate} in the dataframe \texttt{tips.dat}. Demosntrate your result by showing the head of \texttt{tips.dat}.
+
+\textbf{Answer:}
+
+<<>>=
+tips.dat$tip.rate <- tips.dat$tip / tips.dat$total_bill
+head(tips.dat)
+@
+
+\item \label{q.violin} Draw a side by side violin plot of tip rate for each party size. Order the party size based on the median tip rate. Provide your codes and the plot. Which party size is responsible for highest median tip rate?
+
+\textbf{Answer:}
+
+Here, we order by the median tip rate. This can probably be done with \texttt{reshape2}, but I couldn't figure out how to melt and cast the data correctly.
+
+We can see that the single party is responsible for the highest median tip.
+
+<<fig.width=4, fig.height=3, warning=FALSE>>=
+library(ggplot2)
+
+tips.dat$median <- c(rep(0, length(tips.dat[, 1])))
+
+for (i in 1:6) {
+  tips.dat[tips.dat$size == i, ]$median <- 
+    median(tips.dat[tips.dat$size == i, ]$tip.rate)
+}
+
+tips.dat$size <- factor(tips.dat$size, 
+                        levels = tips.dat$size[order(tips.dat$median)])
+
+ggplot(tips.dat, aes(x = factor(size), y = tip.rate)) + 
+  geom_violin(aes(fill = 'grey')) + 
+  geom_boxplot(width = 0.2) +
+  labs(title = 'Tip Rate by Group Size', x = 'Group Size', y = 'Tip Rate') +
+  guides(fill = FALSE)
+@
+
+\item Generate the similar plot you did in question \ref{q.violin} for each day (instead of party size) and facet by sex and smoker. Is the shape of violin plot similar for each faceted condition?
+
+\textbf{Answer:}
+
+<<fig.width=6, fig.height=6, warning=FALSE>>=
+
+tips.dat <- tips
+tips.dat$tip.rate <- tips.dat$tip / tips.dat$total_bill
+tips.dat$median <- c(rep(0, length(tips.dat[, 1])))
+
+for (i in tips.dat$day) {
+  tips.dat[tips.dat$day == i, ]$median <- 
+    median(tips.dat[tips.dat$day == i, ]$tip.rate)
+}
+
+tips.dat$day <- factor(tips.dat$day, 
+                        levels = tips.dat$day[order(tips.dat$median)])
+
+ggplot(tips.dat, aes(x = factor(day), y = tip.rate)) + 
+  geom_violin(aes(fill = 'grey')) + 
+  geom_boxplot(width = 0.2) +
+  facet_grid(smoker ~ sex) +
+  labs(title = 'Tip Rate by Day by Sex', x = 'Day', y = 'Tip Rate') +
+  guides(fill = FALSE)
+@
+
+The shapes are similar for non-smokers, but are quite different between female and male smokers.
+
+\end{enumerate}
+
+\pagebreak
+
+\item We want to generate a plot of US arrest data (USArrests). Please provide the detailed codes to answer the following questions.
+
+\begin{enumerate}
+\item Obtain USA state boundary coordinates data for USA map using function \texttt{map\_data()} and store the data in \texttt{mdat}. Display first few data from \texttt{mdat} and notice that there is a column called \texttt{order} that contains the true order of coordinates.\\
+
+\textbf{Answer:}
+
+<<warning=FALSE>>=
+mdat <- map_data('state')
+head(mdat)
+@
+
+\item \label{standardize-rate} You will find USA crime data in the data frame called \texttt{USArrests}. Standardize the crime rates and create a new column called \texttt{state} so that all the state names are lower case. Store the new data in \texttt{arrest} and report first few data.\\
+
+\textbf{Answer:}
+
+<<>>=
+state <- tolower(rownames(USArrests))
+scaled.arrests <- scale(USArrests)
+pop <- as.data.frame(scaled.arrests[,'UrbanPop'])
+murder <- as.data.frame(scaled.arrests[,'Murder'])
+assault <- as.data.frame(scaled.arrests[,'Assault'])
+rape <- as.data.frame(scaled.arrests[,'Rape'], )
+arrest <- data.frame(pop, murder, assault, rape, state)
+colnames(arrest) <- c('UrbanPop', 'Murder', 'Assault', 'Rape', 'state')
+head(arrest)
+@
+
+\item \label{order-data} Merge the two data sets \texttt{mdat} and \texttt{arrest} by state name. Merging will change the order of coordinates data. So, order the data back to the original order and store the merged-ordered data in \texttt{odat}. Report first few data from \texttt{odat}.
+
+\textbf{Answer:}
+
+<<>>=
+odat <- merge(mdat, arrest, by.x = 'region', by.y = 'state')
+
+# Order the data
+odat <- odat[order(odat$order), ]
+head(odat)
+@
+
+\item All the columns of \texttt{odat} is not necessary for our analysis. So, subset by selecting only columns long, lat, group, region, Murder, Assault, UrbanPop, Rape. Store the data in \texttt{sdat} and report first few rows.
+
+\textbf{Answer:}
+<<>>=
+sdat <- subset(odat, select = c('long', 
+                                'lat', 
+                                'group',
+                                'region', 
+                                'Murder', 
+                                'Assault', 
+                                'UrbanPop', 
+                                'Rape'))
+head(sdat)
+@
+
+\item Melt the data frame \texttt{sdat} with id variables long, lat, group, region. Store the molten data in \texttt{msdat} and report first few rows of data.
+
+\textbf{Answer:}
+
+<<>>=
+msdat <- melt(sdat, id.vars = c('long', 'lat', 'group', 'region'))
+head(msdat)
+@
+
+\item \label{plot-crime} The molten data frame \texttt{msdat} is now ready to be plotted. Create a plot showing USA state map, fill with value and facet\_wrap with variable. Please don't add any legend and make sure that faceting labels are identified so that we can compare the facetted plots.
+
+\textbf{Answer:}
+<<fig.width=8, fig.height=5, warning=FALSE>>=
+ggplot(msdat, aes(x = long, 
+                  y = lat)) +
+  geom_polygon(aes(group = group, 
+                   fill = value), 
+               color = "grey65") +
+  scale_fill_gradient(low = "#ffffff", 
+                      high = "#b50306", 
+                      space = "Lab",
+                      na.value = "grey50",
+                      guide = FALSE) +
+  facet_wrap(~variable)
+@
+
+\textbf{NOTE: } These plots are not showing up correctly in \texttt{Knitr}, but work fine in RStudio. I tried clearing out all variables and closing out RStudio, but I still can't get them to match.
+
+\item Now examine the plot you have generated in question (\ref{plot-crime}) and answer the following questions based on what you see in the plot.
+
+\begin{enumerate}
+\item For each of the crimes, name two states with the highest crime rate.\\
+
+\textbf{Answer:}
+
+For murder, Georgia is the highest followed by a few other southern states, such as Mississippi. In assault, Florida and North Carolina clock in as the highest. And for rape, Nevada stands out as bright red, followed by California.
+
+\item Do you think larger urban population is an indicative of larger murder rate? Why or why not? 
+
+\textbf{Answer:}
+
+Definitely not. If this were the case, California, New York, Texas, Illinois, and Florida would stand out on the murder plots, but instead, southern states, which are some of the lightest in terms of urban population, dominate in the murder category.
+
+\end{enumerate}
+
+\item In question (\ref{standardize-rate}) we standardized the crime rates. Why do you think we did this? Explain what would happen if we would not do this.
+
+\textbf{Answer:}
+
+By standardizing the crime rates, we put everything on the same scale. Measuring things against each other is meaningless if they are on different scales.
+
+\item In question (\ref{order-data}) we ordered the data after merging. Why do you think we have to order? Explain what would happen if we would not order.
+
+\textbf{Answer:}
+
+The order of the data is what determines how the shape files are drawn. It's like playing "connect the dots". If we didn't have an order in which to connect them, our polygon would likely not look like a state.
+
+\end{enumerate}
+
+\item For the following questions please use data frame \texttt{tips} 
+
+\begin{enumerate}
+
+\item \label{bar} Create a bar chart that shows average tip by day.
+
+\textbf{Answer:}
+
+<<fig.width=4, fig.height=3, warning=FALSE>>=
+tips.ordered <- tips
+
+tips.ordered$day <- factor(tips$day, levels = c('Thur', 'Fri', 'Sat', 'Sun'))
+
+ggplot(tips.ordered) + 
+  geom_bar(aes(day, tip), 
+           position = "dodge", 
+           stat = "summary", 
+           fun.y = "mean") +
+  labs(title = 'Tips by Day')
+@
+
+\item Compute the average tip, total tip and average size grouped by smoker and day. i.e.,  For each combination of smoker and day you should have a row of these summaries. Report the result in a nice table.
+
+\textbf{Answer:}
+\begin{center}
+<<echo=FALSE>>=
+library(knitr)
+avg.nonsmoker <- mean(tips[tips$smoker == 'No', ]$tip)
+avg.smoker <- mean(tips[tips$smoker == 'Yes', ]$tip)
+avg.thu <- mean(tips[tips$day == 'Thur', ]$tip)
+avg.fri <- mean(tips[tips$day == 'Fri', ]$tip)
+avg.sat <- mean(tips[tips$day == 'Sat', ]$tip)
+avg.sun <- mean(tips[tips$day == 'Sun', ]$tip)
+
+tot.nonsmoker <- sum(tips[tips$smoker == 'No', ]$tip)
+tot.smoker <- sum(tips[tips$smoker == 'Yes', ]$tip)
+tot.thu <- sum(tips[tips$day == 'Thur', ]$tip)
+tot.fri <- sum(tips[tips$day == 'Fri', ]$tip)
+tot.sat <- sum(tips[tips$day == 'Sat', ]$tip)
+tot.sun <- sum(tips[tips$day == 'Sun', ]$tip)
+
+siz.nonsmoker <- mean(tips[tips$smoker == 'No', ]$size)
+siz.smoker <- mean(tips[tips$smoker == 'Yes', ]$size)
+siz.thu <- mean(tips[tips$day == 'Thur', ]$size)
+siz.fri <- mean(tips[tips$day == 'Fri', ]$size)
+siz.sat <- mean(tips[tips$day == 'Sat', ]$size)
+siz.sun <- mean(tips[tips$day == 'Sun', ]$size)
+
+avg <- c(avg.nonsmoker, avg.smoker, avg.thu, avg.fri, avg.sat, avg.sun)
+tot <- c(tot.nonsmoker, tot.smoker, tot.thu, tot.fri, tot.sat, tot.sun)
+siz <- c(siz.nonsmoker, siz.smoker, siz.thu, siz.fri, siz.sat, siz.sun)
+
+group <- c('NonSmoker', 'Smoker', 'Thu', 'Fri', 'Sat', 'Sun')
+
+df <- as.data.frame(cbind(avg, tot, siz))
+
+rownames(df) <- group
+
+kable(df, format = "latex", booktabs = TRUE, align = 'r', col.names=c('Average Tip', 'Total Tip', 'Average Group Size'))
+
+ 
+@
+
+\end{center}
+
+
+\item \label{bar-facet} Create a bar chart that shows average tip by day and also faceted by smoker.
+
+\textbf{Answer:}
+
+<<fig.width=4, fig.height=3, warning=FALSE>>=
+tips.ordered <- tips
+tips.ordered$day <- factor(tips$day, levels = c('Thur', 'Fri', 'Sat', 'Sun'))
+
+ggplot(tips.ordered) + 
+  geom_bar(aes(day, tip), 
+           position = "dodge", 
+           stat = "summary", 
+           fun.y = "mean") + 
+  facet_grid(. ~ smoker) +
+  labs(title = 'Tips by Day, Non-Smokers vs. Smokers')
+@
+
+
+\item In questions \ref{bar} and \ref{bar-facet} we plotted the summary of data which does not show us the whole picture. In practice we like to see the whole data. What plot do you suggest to serve the same purpose similar to what we did in question \ref{bar-facet}? In other words, what would be a better plot to show tips by day and facetted by smoker? Please produce that plot and include your codes.
+
+\textbf{Answer:}
+
+A box-and-whisker plot gives us much more information than a bar plot. In this one plot, we get the upper and lower quantiles, the median, the range, and even outliers.
+
+<<fig.width=4, fig.height=3, warning=FALSE>>=
+ggplot(tips.ordered) + 
+  geom_boxplot(aes(day, tip)) +
+  facet_grid(. ~ smoker) +
+  labs(title = 'Tips by Day, Non-Smokers vs. Smokers')
+@
+
+\end{enumerate}
+
+\pagebreak
+
+\item Life expectancy data for four countries are obtained from the world bank database which you will find on blackboard. It contains life expectancy in years for different genders. Download the data from the blackboard and save it on your hard drive. Now answer the following questions. 
+
+\begin{enumerate}
+
+\item Read the file from your hard drive and display first few rows of the data. 
+
+\textbf{Answer:}
+
+
+<<>>=
+life.expectancy <- read.csv(file='life-expectancy.csv', header=TRUE)
+head(life.expectancy)
+@
+
+
+\item \label{life} Generate a plot showing trend line of life expectancy over different year. Color them by sex and facet by country. Include your code and the plot.
+
+\textbf{Answer:}
+
+<<fig.width=10, fig.height=3, warning=FALSE>>=
+
+life.expect.melt <- melt(life.expectancy, id.vars=c('year', 'sex'))
+
+ggplot(life.expect.melt) +
+  geom_line(aes(year, value, colour = sex)) +
+  facet_grid(. ~ variable)
+@
+
+\item Explain what interesting features you notice in the plot of question \ref{life}.
+
+\textbf{Answer:}
+
+Perhaps the most surprising feature is how much higher life expectancy is in the US. People in the US can expect to live nearly ten years longer than in Bangladesh, India, or Pakistan. Also interesting is that women in the US can expect to live between five and ten years longer than men. Lastly, a positive note, life expectancy has increased across the board over the years.
+
+\end{enumerate}
+
+
+\pagebreak
+
+\item {\bf Ordering the factor} In class, we have seen how to order the factors. Suppose we have the following data about different class of students;
+
+<<>>=
+class <- c("freshman", "graduate", "junior", "senior", "sophomore")
+rate <- c(56, 35, 56, 48, 60)
+df <- data.frame(class, rate)
+@
+
+Now please answer the following questions.
+
+\begin{enumerate}
+
+\item Convert the class column of dataframe `df` into a factor column. Demonstrate that it is indeed converted into a factor column. 
+
+\textbf{Answer:}
+
+<<>>=
+df$class <- factor(class, levels=class)
+str(df$class)
+@
+
+\item Now generate a bar chart showing the rate of different class.
+
+\textbf{Answer:}
+<<fig.height=3, fig.width=4>>=
+ggplot(df, aes(x = class, y = rate)) + 
+  geom_bar(stat = "identity") 
+@
+
+\item Notice the order of the levels of class is not natural, instead the plot shows the dictionary order. Now, order the bars according to the natural order of the levels of the class (freshman, sophomore, junior, senior, graduate) and regenrate the bar graph.
+
+\textbf{Answer:}
+
+<<fig.height=3, fig.width=4>>=
+df$class <- factor(class, levels = c("freshman", 
+                                     "sophomore",  
+                                     "junior", 
+                                     "senior", 
+                                     "graduate"))
+
+ggplot(df, aes(x = class, y = rate)) + 
+  geom_bar(stat = "identity")
+@
+
+
+\end{enumerate}
+
+\pagebreak
+
+\item {\bf Bonus (2 points)} for undergraduates and mandatory for graduate students. Suppose we have a vector of data as follows:
+
+<<>>=
+myVector <- c(1, 2, 3, 4, 5, 6, 7, 8)
+@
+
+\begin{enumerate}
+
+\item \label{q.tapply} Using function \texttt{tapply()} compute the mean of first three values, next two values and rest of the three values. Show your codes and your result should be 2, 4.5 and 7.
+
+\textbf{Answer:}
+<<>>=
+myVector <- c(1, 2, 3, 4, 5, 6, 7, 8)
+
+tapply(myVector, c(1, 1, 1, 2, 2, 3, 3, 3), FUN=mean)
+@
+
+\item Now compute the sum of squares instead of mean that you have done in question \ref{q.tapply}. Show your codes and your result should be 14, 41 and 149. 
+
+\textbf{Answer:}
+<<>>=
+myVector <- c(1, 2, 3, 4, 5, 6, 7, 8)
+
+sumSq <- function(x) {
+  return(sum(x^2))
+}
+tapply(myVector, c(1, 1, 1, 2, 2, 3, 3, 3), FUN=sumSq)
+@
+
+\end{enumerate}
+
+\end{enumerate}
+\end{document}
+
+
+
+
+
