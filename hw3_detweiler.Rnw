@@ -1,0 +1,384 @@
+\documentclass{article}
+\usepackage[vmargin=1in,hmargin=1in]{geometry}
+\usepackage{booktabs}
+%\usepackage[utf8x]{inputenc}
+\begin{document}
+
+<<include=FALSE>>=
+opts_chunk$set(fig.align='center', message=FALSE, warnings=FALSE, cache=FALSE)
+@
+
+\begin{center}
+\large \textsc{Homework 3} \\
+STAT 4410/8416 Sections 001/002\\
+Brian Detweiler
+\textsc{Fall 2016}\\
+Due: October 23, 2016 by midnight
+\normalsize
+\end{center}
+
+\begin{enumerate}
+
+\item {\bf Regular expression:} Write a regular expression to match patterns in the following strings. Demonstrate that your regular expression indeed matched that pattern by including codes and results. Carefully review how the first problem is solved for you.
+
+
+\begin{enumerate}
+\item We have a vector \texttt{vText} as follows. Write a regular expression that matches \texttt{g, og, go or ogo} in \texttt{vText} and replace the matches with dots.
+
+<<output=FALSE, message=FALSE, warning=FALSE, error=FALSE>>=
+library(stringr)
+library(tm)
+library(data.table)
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+library(SnowballC)
+library(RColorBrewer)
+library(wordcloud)
+@
+
+<<>>=
+vText <- c('google','logo','dig', 'blog', 'boogie' )
+@
+{\bf Answer:}
+<<>>=
+pattern <- 'o?go?'
+gsub(pattern, '.', vText)
+@
+
+
+\item Replace only the 2 or 3 digit numbers with the word \texttt{found} in the following vector. Please make sure that 4, 5 or 1 digit numbers do not get changed.
+<<>>=
+vPhone <- c('35','6783','345', '20', '46349', '8' )
+@
+
+{\bf Answer:}
+<<>>=
+pattern <- '^[0-9]{2,3}$'
+gsub(pattern, 'found', vPhone)
+@
+
+
+\item Replace all the characters that are not among the 26 English characters or a space. Please replace with an empty spring.
+<<>>=
+myText <- "#y%o$u @g!o*t t9h(e) so#lu!tio$n c%or_r+e%ct"
+@
+
+{\bf Answer:}
+<<>>=
+pattern <- '[^A-Za-z ]+'
+gsub(pattern, '', myText)
+@
+
+
+\item In the following text, replace all the words that are exactly 3 characters long with triple dots `...'
+
+<<>>=
+myText <- "All the three character words should be gone now"
+@
+
+{\bf Answer:}
+<<>>=
+pattern <- '(^\\w{3}?|(\\b\\w{3}\\b)|\\w{3}$)'
+gsub(pattern, '\\3...', myText)
+@
+
+
+
+\item Extract all the three numbers embedded in the following text.
+
+<<>>=
+bigText <- 'There were three 20@14 numbers hidden in 500 texts'
+@
+
+{\bf Answer:}
+<<>>=
+pattern <- '([^0-9])'
+trimws(gsub(pattern, ' ', bigText))
+nums <- unique(as.numeric(unlist(strsplit(gsub(pattern, ' ', bigText), split = ' '))))
+nums[which(!is.na(nums))]
+@
+
+\item Extract all the words between parenthesis from the following string text and count number of words.
+
+<<>>=
+myText <- 'The salries are reported (in millions) for every companies.'
+@
+
+{\bf Answer:}
+<<>>=
+pattern <- '.*\\((.*)\\).*'
+parens <- gsub(pattern, '\\1', myText)
+parens
+vParens <- unlist(strsplit(parens, split = " "))
+length(vParens)
+@
+
+\item Extract only the word in between pair of symbols \$. Count number of words you have found between pair of dollar sign \$.  
+
+<<>>=
+myText <- 'Math sumbols are $written$ in $between$ dollar $signs$'
+@
+
+{\bf Answer:}
+<<>>=
+vMyText <- unlist(strsplit(myText, split = ' '))
+detect.pattern <- '^\\$.*\\$$'
+replace.pattern <- '\\$'
+words.found <- gsub(replace.pattern, '', vMyText[str_detect(vMyText, detect.pattern)])
+words.found
+length(words.found)
+@
+
+
+\item Extract all the letters of the following sentence and prove that it contains all the 26 letters. 
+
+<<>>=
+myText <- 'the quick brown fox jumps over the lazay dog'
+@
+
+{\bf Answer:}
+<<>>=
+pattern <- ' ?([a-z]) ?'
+alpha <- sort(unique(unlist(strsplit(gsub(pattern, '\\1 ', myText), split = c(' ')))))
+alpha
+length(alpha)
+@
+\end{enumerate}
+
+
+\item Download the sample of a big data from blackboard. Note that the data is in csv format and compressed for easy handling. Now answer the following questions.
+
+<<>>=
+big.data <- fread('bigDataSample.csv')
+@
+
+\begin{enumerate}
+\item \label{select-few} Read the data and select only the columns that contains the word 'human'. Store the data in an object \texttt{dat}. Report first few rows of your data.
+
+{\bf Answer:}
+<<>>=
+dat <- select(big.data, contains('human'))
+head(dat)
+@
+
+\item The data frame \texttt{dat} should have 5 columns. Rename the column names keeping only the last character of the column names. So each column name will have only one character. Report first few rows of your data now.
+
+{\bf Answer:}
+<<>>=
+cols <- colnames(dat) 
+pattern <- '.*([a-z])$'
+cols <- gsub(pattern, '\\1', cols)
+colnames(dat) <- cols
+head(dat)
+@
+
+\item Compute and report the means of each columns group by column b in a nice table.
+
+{\bf Answer:}
+<<>>=
+dat %>% 
+  group_by(b) %>% 
+  summarise_each(funs(mean))
+@
+
+\item Change the data into long form using id=`b' and store the data in \texttt{mdat}. Report first few rows of data.
+
+{\bf Answer:}
+<<warning=FALSE>>=
+mdat <- melt(dat, id.vars = 'b')
+head(mdat)
+@
+
+
+\item The data frame \texttt{mdat} is now ready for plotting. Generate density plots of value, color and fill by variable and facet by b.
+
+{\bf Answer:}
+<<fig.height=4, fig.width=6>>=
+ggplot(mdat, aes(x = value, colour = variable, fill = variable)) +
+  geom_density() +
+  facet_grid(. ~ b) 
+@
+
+
+\item The data set \texttt{bigDataSample.csv} is a sample of much bigger data set. Here we read the data set and then selected the desired column. Do you think it would be wise do the same thing with the actual larger data set? Explain how you will solve this problem of selecting few columns (as we did in question \ref{select-few}) without reading the whole data set first. Demonstrate that showing your codes.
+
+{\bf Answer:}
+We can first get the column names using nrows,
+<<>>=
+columns <- colnames(read.csv(file = 'bigDataSample.csv', nrows = 1, header = T))
+length(columns)
+@
+
+Then, we can determine what columns we want, using \texttt{stringr},
+<<>>=
+columns <- columns[str_detect(columns, '.*human.*')]
+columns
+@
+
+Finally, we can read just those columns very quickly using \texttt{data.table::fread},
+<<>>=
+dat <- fread('bigDataSample.csv', 
+             select = columns)
+head(dat)
+@
+
+\end{enumerate}
+
+
+\item {\bf Extracting data from web:} Our plan is to extract data from web sources. This includes email addresses, phone numbers or other useful data. The function \texttt{readLines()} is very useful for this purpose.
+
+\begin{enumerate}
+
+\item Please read all the text in http://www.unomaha.edu/mahbubulmajumder/index.html and store your texts in \texttt{myText}. Show first few rows of \texttt{myText} and examine the structure of the data.
+
+{\bf Answer:}
+
+<<warning=FALSE>>=
+unomaha <- 'http://www.unomaha.edu/mahbubulmajumder/index.html'
+myText <- readLines(unomaha)
+head(myText)
+@
+
+\item Write a regular expression that would extract all the http web links addresses from \texttt{myText}. Include your codes and display the results that show only the http web link addresses and nothing else.
+
+{\bf Answer:}
+<<>>=
+pattern <- '.*<a +href="(.*)" ?(target.*)?.*'
+links <- myText[str_detect(myText, pattern)]
+gsub(pattern, '\\1', links)
+@
+
+\item Now write a regular expression that would extract all the emails from \texttt{myText}. Include your codes and display the results that show only the email addresses and nothing else.
+
+{\bf Answer:}
+<<>>=
+pattern <- '.*(\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b).*'
+emails <- myText[str_detect(myText, pattern)]
+gsub(pattern, '\\1', emails)
+@
+
+
+\item Now we want to extract all the phone/fax numbers in \texttt{myText}. Write a regular expression that would do this. Demonstrate your codes showing the results. 
+
+{\bf Answer:}
+<<>>=
+pattern <- '[0-9]'
+phone <- myText[str_detect(myText, pattern)]
+pattern <- '[^0-9]'
+phone <- gsub(pattern, '', phone)
+phone <- phone[str_length(phone) == 10]
+pattern <- '([0-9]{3})([0-9]{3})([0-9]{4})'
+gsub(pattern, '(\\1) \\2-\\3', phone)
+@
+
+\item The link of ggplot2 documentation is http://docs.ggplot2.org/current/ and we would like to get the list of ggplot2 geoms from there. Write a regular expression that would extract all the geoms names (geom\_bar is one of them) from this link and display the unique geoms. How many unique geoms does it have?
+
+{\bf Answer:}
+<<warning=FALSE>>=
+geoms <- readLines('http://docs.ggplot2.org/current')
+pattern <- '.*(geom_[a-z]+)\\.html.*'
+geoms <- geoms[str_detect(geoms, pattern)]
+geoms <- gsub(pattern, '\\1', geoms)
+geoms
+@
+
+\end{enumerate}
+
+\item Download \texttt{lincoln-last-speech.txt} from the blackboard which contains the Lincoln's last public address. Now answer the following questions and include your codes. 
+
+\begin{enumerate}
+
+\item Read the text and store the text in \texttt{lAddress}. Show the first 70 characters from the first element of the text.
+
+{\bf Answer:}
+<<warning=FALSE>>=
+lAddress <- readLines('lincoln-last-speech.txt')
+substr(lAddress[1], 1, 70)
+@
+
+\item Now we are interested in the words used in his speech. Extract all the words from \texttt{lAddress}, convert all of them to lower case and store the result in \texttt{vWord}. Display first few words.
+
+{\bf Answer:}
+<<warning=FALSE>>=
+vWord <- unlist(strsplit(lAddress, split = ' '))
+head(vWord)
+@
+
+\item The words like `am', `is', `my' or `through' are not much of our interest and these types of words are called stop-words. The package `tm' has a function called \texttt{stopwords()}. Get all the English stop words and store them in \texttt{sWord}. Display few stop words in your report.
+
+{\bf Answer:}
+<<warning=FALSE>>=
+sWord <- stopwords(kind = 'en')
+head(sWord)
+@
+
+
+\item Remove all the \texttt{sWord} from \texttt{vWord} and store the result in \texttt{cleanWord}. Display first few clean words.
+
+{\bf Answer:}
+<<warning=FALSE>>=
+cleanWord <- vWord
+# Remove hyphens
+cleanWord <- gsub("-", "", cleanWord)
+# Remove non-english characters
+cleanWord <- gsub("\\W*(\\w+)\\W*", "\\1", cleanWord)
+# Lowercase everything
+cleanWord <- tolower(cleanWord)
+# Remove stopwords
+cleanWord <-  cleanWord[which(!(cleanWord %in% sWord))]
+
+head(cleanWord)
+@
+
+\item \texttt{cleanWord} contains all the cleaned words used in Lincoln's address. We would like to see which words are more frequently used. Find 15 most frequently used clean words and store the result in \texttt{fWord}. Display first 5 words from \texttt{fWord} along with their frequencies.
+
+{\bf Answer:}
+<<warning=FALSE>>=
+# Remove stopwords
+
+fWord <- sort(table(cleanWord), decreasing = TRUE)
+fWord[1:5]
+@
+
+
+
+\item \label{coord} Construct a bar chart showing the count of each words for the 15 most frequently used words. Add a layer `\texttt{+coord\_flip()}' with your plot.
+
+{\bf Answer:}
+<<warning=FALSE, fig.height=5, fig.width=4>>=
+wordsDF <- as.data.frame(fWord[1:15])
+ggplot(wordsDF, aes(x = cleanWord, y = Freq)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Frequency of words used in Lincoln's last address",
+       x = "word",
+       y = "frequency")
+@
+
+\item What is the reason for adding a layer `\texttt{+coord\_flip()}' with the plot in question (\ref{coord}). Explain what would happen if we would not have done that.
+
+{\bf Answer:}
+\texttt{coord\_flip()} swaps the x-y axes of the plot. If we had not done this, the word labels can easily overwrite each other and the plot becomes very difficult, if not impossible to read. Another approach is to angle the labels 45 degrees, but this is slightly more difficult to read since the labels don't line up directly with the bars. 
+
+\item The plot in question (\ref{coord}) uses bar plot to display the data. Can you think of another plot that delivers the same information but looks much simpler? Demonstrate your answer by generating such a plot. 
+
+{\bf Answer:}
+
+We can display this data in an aesthetically pleasing wordcloud. Wordclouds are not good for quantitative analysis, but can be useful for exploratory analysis or as a supplement to quantitative reporting.
+
+<<warning=FALSE, fig.height=5, fig.width=4>>=
+corp <- Corpus(VectorSource(cleanWord))
+
+wordcloud(corp, max.words = 100, random.order = FALSE)
+@
+\end{enumerate}
+
+\end{enumerate}
+
+\end{document}
+
+
+
+
+

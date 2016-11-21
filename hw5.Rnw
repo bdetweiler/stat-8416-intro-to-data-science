@@ -1,0 +1,131 @@
+\documentclass{article}
+\usepackage[vmargin=1in,hmargin=1in]{geometry}
+\usepackage{booktabs}
+%\usepackage[utf8x]{inputenc}
+\begin{document}
+
+<<include=FALSE>>=
+opts_chunk$set(fig.align='center', message=FALSE, warning=FALSE, cache=FALSE)
+@
+
+\begin{center}
+\large \textsc{Homework 5} \\
+STAT 4410/8416 Section 001\\
+\textsc{Fall 2014}\\
+Due: November 29, 2016 by midnight
+\normalsize
+\end{center}
+
+\begin{enumerate}
+
+\item {\bf Scrapping HTML data:} We often obtain data from Wikipedia. This exercise will guide us to collect some data about the native speakers of some common languages. The information can be obtained from the following link (remember to copy it from pdf not Rnw file).\\
+
+http://en.Wikipedia.org/wiki/List\_of\_languages\_by\_number\_of\_native\_speakers \\
+
+
+
+Now answer the questions below.
+
+\begin{enumerate}
+
+\item Read all the HTML tables available in the above link and store the result in an object called \texttt{tables}. Note that you may have ti use the function \texttt{getURL()} as we talked in class. 
+
+
+\item Now notice that the table in this link does not have any ID to specifically get the data from. But if you examine the source of the page, the first table is the data table. Thus we pick first table in the list of tables as our data. Store the data of first table in an object called \texttt{datRaw}. 
+
+
+\item We are particularly interested about columns 2 and 3 of \texttt{datRaw}. Subset columns 1 and 2 of \texttt{datRaw} and store the data in \texttt{dat}. Give the column names as language, nativeSpeaker. Display some data from \texttt{dat}.
+
+
+\item Notice that the data is not clean. We have a comma(`,') and refernces in parenthesis in the number of native speaker. We have to carefully review the data before we can use it. But first let us remove the  `,' and additional numers with parenthesis from column 2 and make the column numeric. Also we may need to do the same operation with the first column. Clean the data and store it in \texttt{cleanDat}. Display some cleaned data. 
+
+
+\item Now plot the data to show language wise ranks and their relative position. For this we plan to select only top 20 languages based on number of speakers. Generate a bar chart showing the top 20 languages. Order the bars according to the number of speakers. Please  {\bf don't show} totals.
+
+
+\end{enumerate}
+
+
+\item {\bf Extracting twitter data:} In this problem we would like to extract data from twitter. For this refer to the documentation in the following link.
+
+\texttt{https://github.com/geoffjentry/twitteR/}
+
+\begin{enumerate}
+\item {\bf Twitter API set up} Set up twitter API using any of the following methods. Make sure you installed all the packages as mentioned in the class.\\
+
+{\bf Method 1:} Read Getting Started section of the above link and create a twitter application by going to the link \texttt{https://apps.twitter.com/}. Once you created your application connect twitter from \texttt{R} using the secrets and keys obtained from your twitter application. 
+
+
+<<eval=FALSE>>=
+library(twitteR)
+api_key <- "your api key"  
+api_secret <- "your api secret" 
+access_token <- "your access tocken"
+access_token_secret <- "your access tocken secret"
+
+setup_twitter_oauth(api_key,api_secret,access_token,
+                    access_token_secret)
+@
+
+{\bf Method 2:} If you don't like creating an account with twitter and going through all the trouble, you can use my keys (ssh, don't tell anyone). For this download the \texttt{hw5-twitter-auth} file from blackboard and load it as follows.
+<<>>=
+load("hw5-twitter-auth")
+
+library(twitteR)
+setup_twitter_oauth(api_key,api_secret,access_token,
+                    access_token_secret)
+@
+
+\item Now search twitter messages for "data science job". Display few job informations.
+
+\item Search 300 tweets using the hash tag ``\#chess" and save them in an object called \texttt{rTweets}. Show the top 7 sources of tweets (such as android or iphone) in a ordered bar plot. 
+
+
+\item Notice that the object \texttt{rTweets} is a list. Convert it into a data frame using function \texttt{twListToDF} and store it in an object called \texttt{dTweets}. Display some data from \texttt{dTweets}.
+
+
+\item \texttt{dTweets} has a column showing the time the tweet was created. Generate a plot showing number of tweets on each of the hours.
+
+
+\item Arrange the dataframe \texttt{dTweets} based on the \texttt{retweetCount}. While doing this select only columns \texttt{text, screenName, retweetCount}. Store the data in a object called \texttt{mostTweets}. Display five texts that are most retweeted.
+
+
+\item Generate a bar chart showing top 10 screen names and count of retweets from \texttt{mostTweets}. Order the bars based on the retweet counts.
+
+
+\end{enumerate}
+
+
+\item {\bf Working with databases:} For this exercise we will use \texttt{MySQL} database available in the data science lab or the \texttt{datascienceVM}. Answer the following questions.
+
+\begin{enumerate}
+
+\item Write down the connection string that would establish a connection to the \texttt{MySQL} database \texttt{trainingDB}.
+
+
+\item \label{q:sql} Write down a \texttt{SQL} command to select pclass, sex, survived and their average age from the titanic table. Store the selected data in data frame \texttt{avgAge} and display all the aggregated data.
+
+
+\item Now generate a line plot showing average age vs pclass colored by survived and faceted by sex.
+
+
+\item Use the package \texttt{dplyr} to obtain the same result as you did in question \ref{q:sql}. Display the results and the underlying \texttt{SQL} command used by \texttt{dplyr}.
+
+
+\item Find the name, age, sex and pclass of the 5 oldest and 5 youngest persons who died. Remove the people whose age information are not available for this computation.
+
+
+
+\end{enumerate}
+
+
+
+
+\item {\bf Exploring data:} Explore the crime data by downloading it from the blackboard. Provide nice tables and some plots that explain some important features revealed from the data. Discuss what you have found.
+
+
+\end{enumerate}
+
+\end{document}
+
+
